@@ -3,14 +3,21 @@ import sys
 import numpy as np
 import pandas as pd
 
+from mlxtend.preprocessing import TransactionEncoder
+
 import warnings
 
 warnings.filterwarnings("ignore")
 
-def debug():
-    # print (ib1_max, ib2_max, ib3_max, ib4_max, ib5_max)
-    # print (cgm1_max, cgm2_max, cgm3_max, cgm4_max, cgm5_max)
-    # print (cgm1_food, cgm2_food, cgm3_food, cgm4_food, cgm5_food)
+def debug(print_=False):
+    debug_cgm_max(print_)
+    debug_cgm_food(print_)
+    debug_ib(print_)
+    # debug_dataset(print)
+
+def debug_ib(print_=False):
+    if print_ is not False:
+        print (ib1_max, ib2_max, ib3_max, ib4_max, ib5_max)
     ib1_max.to_csv(
         r"/Users/atinsinghal97/Documents/Projects/ASU/Spring 20/CSE 572 Data Mining/Assignment 4/Processed Data/ib1_max.csv",
         index=False, header=False)
@@ -26,6 +33,10 @@ def debug():
     ib5_max.to_csv(
         r"/Users/atinsinghal97/Documents/Projects/ASU/Spring 20/CSE 572 Data Mining/Assignment 4/Processed Data/ib5_max.csv",
         index=False, header=False)
+
+def debug_cgm_max(print_=False):
+    if print_ is not False:
+        print (cgm1_max, cgm2_max, cgm3_max, cgm4_max, cgm5_max)
     cgm1_max.to_csv(
         r"/Users/atinsinghal97/Documents/Projects/ASU/Spring 20/CSE 572 Data Mining/Assignment 4/Processed Data/cgm1_max.csv",
         index=False, header=False)
@@ -41,6 +52,10 @@ def debug():
     cgm5_max.to_csv(
         r"/Users/atinsinghal97/Documents/Projects/ASU/Spring 20/CSE 572 Data Mining/Assignment 4/Processed Data/cgm5_max.csv",
         index=False, header=False)
+
+def debug_cgm_food(print_=False):
+    if print_ is not False:
+        print (cgm1_food, cgm2_food, cgm3_food, cgm4_food, cgm5_food)
     cgm1_food.to_csv(
         r"/Users/atinsinghal97/Documents/Projects/ASU/Spring 20/CSE 572 Data Mining/Assignment 4/Processed Data/cgm1_food.csv",
         index=False, header=False)
@@ -55,6 +70,25 @@ def debug():
         index=False, header=False)
     cgm5_food.to_csv(
         r"/Users/atinsinghal97/Documents/Projects/ASU/Spring 20/CSE 572 Data Mining/Assignment 4/Processed Data/cgm5_food.csv",
+        index=False, header=False)
+
+def debug_dataset(print_=False):
+    if print_ is not False:
+        print (dataset1, dataset2, dataset3, dataset4, dataset5)
+    dataset1.to_csv(
+        r"/Users/atinsinghal97/Documents/Projects/ASU/Spring 20/CSE 572 Data Mining/Assignment 4/Processed Data/dataset1.csv",
+        index=False, header=False)
+    dataset2.to_csv(
+        r"/Users/atinsinghal97/Documents/Projects/ASU/Spring 20/CSE 572 Data Mining/Assignment 4/Processed Data/dataset2.csv",
+        index=False, header=False)
+    dataset3.to_csv(
+        r"/Users/atinsinghal97/Documents/Projects/ASU/Spring 20/CSE 572 Data Mining/Assignment 4/Processed Data/dataset3.csv",
+        index=False, header=False)
+    dataset4.to_csv(
+        r"/Users/atinsinghal97/Documents/Projects/ASU/Spring 20/CSE 572 Data Mining/Assignment 4/Processed Data/dataset4.csv",
+        index=False, header=False)
+    dataset5.to_csv(
+        r"/Users/atinsinghal97/Documents/Projects/ASU/Spring 20/CSE 572 Data Mining/Assignment 4/Processed Data/dataset5.csv",
         index=False, header=False)
 
 
@@ -278,8 +312,64 @@ if (cgm5_food.shape == cgm5_max.shape == ib5_max.shape) is False:
     sys.exit(0)
 
 # print('Data verification completed successfully.')
-debug()
+# debug(print_=False)
 
 
 # Binning
+
+def getBin(val):
+    # if val>40 and val<=50:
+    #     return 1
+    # elif val>50 and val<=60:
+    #     return 2
+    if float(val)%10==float(0):
+        return int(val/10)-4
+    else:
+        return int(val/10)-3
+
+cgm1_max_bin = cgm1_max
+cgm2_max_bin = cgm2_max
+cgm3_max_bin = cgm3_max
+cgm4_max_bin = cgm4_max
+cgm5_max_bin = cgm5_max
+
+cgm1_food_bin = cgm1_food
+cgm2_food_bin = cgm2_food
+cgm3_food_bin = cgm3_food
+cgm4_food_bin = cgm4_food
+cgm5_food_bin = cgm5_food
+
+cgm1_max_bin = cgm1_max_bin.apply(lambda x: getBin(x))
+cgm2_max_bin = cgm2_max_bin.apply(lambda x: getBin(x))
+cgm3_max_bin = cgm3_max_bin.apply(lambda x: getBin(x))
+cgm4_max_bin = cgm4_max_bin.apply(lambda x: getBin(x))
+cgm5_max_bin = cgm5_max_bin.apply(lambda x: getBin(x))
+# print(cgm1_max_bin, cgm1_max)
+
+cgm1_food_bin = cgm1_food_bin.apply(lambda x: getBin(x))
+cgm2_food_bin = cgm2_food_bin.apply(lambda x: getBin(x))
+cgm3_food_bin = cgm3_food_bin.apply(lambda x: getBin(x))
+cgm4_food_bin = cgm4_food_bin.apply(lambda x: getBin(x))
+cgm5_food_bin = cgm5_food_bin.apply(lambda x: getBin(x))
+
+
+# Creating Dataset
+
+dataset1 = pd.concat([cgm1_max_bin, cgm1_food_bin, ib1_max], axis=1)
+dataset1.columns = ['cgm_max', 'cgm_food', 'ib']
+dataset2 = pd.concat([cgm2_max_bin, cgm2_food_bin, ib2_max], axis=1)
+dataset2.columns = ['cgm_max', 'cgm_food', 'ib']
+dataset3 = pd.concat([cgm3_max_bin, cgm3_food_bin, ib3_max], axis=1)
+dataset3.columns = ['cgm_max', 'cgm_food', 'ib']
+dataset4 = pd.concat([cgm4_max_bin, cgm4_food_bin, ib4_max], axis=1)
+dataset4.columns = ['cgm_max', 'cgm_food', 'ib']
+dataset5 = pd.concat([cgm5_max_bin, cgm5_food_bin, ib5_max], axis=1)
+dataset5.columns = ['cgm_max', 'cgm_food', 'ib']
+# print (dataset1, dataset2, dataset3, dataset4, dataset5)
+
+# print('Dataset created successfully.')
+# debug_dataset(print_=False)
+
+
+# Finding Frequent Itemsets
 
