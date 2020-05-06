@@ -3,7 +3,6 @@ import sys
 import numpy as np
 import pandas as pd
 
-# from apyori import apriori
 from mlxtend.frequent_patterns import apriori, association_rules
 from mlxtend.preprocessing import TransactionEncoder
 
@@ -185,19 +184,6 @@ cgm4 = pd.read_csv(directory + cgmFiles[3])
 cgm5 = pd.read_csv(directory + cgmFiles[4])
 
 
-# ib1 = pd.read_csv(directory + ibFiles[0], usecols=[*range(0, 30)])
-# ib2 = pd.read_csv(directory + ibFiles[1], usecols=[*range(0, 30)])
-# ib3 = pd.read_csv(directory + ibFiles[2], usecols=[*range(0, 30)])
-# ib4 = pd.read_csv(directory + ibFiles[3], usecols=[*range(0, 30)])
-# ib5 = pd.read_csv(directory + ibFiles[4], usecols=[*range(0, 30)])
-#
-# cgm1 = pd.read_csv(directory + cgmFiles[0], usecols=[*range(0, 30)])
-# cgm2 = pd.read_csv(directory + cgmFiles[1], usecols=[*range(0, 30)])
-# cgm3 = pd.read_csv(directory + cgmFiles[2], usecols=[*range(0, 30)])
-# cgm4 = pd.read_csv(directory + cgmFiles[3], usecols=[*range(0, 30)])
-# cgm5 = pd.read_csv(directory + cgmFiles[4], usecols=[*range(0, 30)])
-
-
 # Check CGM data for NaN values & dropping 'em
 
 check_nan_cgm1 = cgm1['cgmSeries_25'].isnull()
@@ -341,7 +327,7 @@ cgm5_food = cgm5['cgmSeries_25']
 # print (cgm1_food, cgm2_food, cgm3_food, cgm4_food, cgm5_food)
 
 
-# Verifying data integrity
+# Data sanity check
 
 if (cgm1_food.shape == cgm1_max.shape == ib1_max.shape) is False:
     print ("Issues with Patient 1 Data")
@@ -359,7 +345,7 @@ if (cgm5_food.shape == cgm5_max.shape == ib5_max.shape) is False:
     print ("Issues with Patient 5 Data")
     sys.exit(0)
 
-# print('Data verification completed successfully.')
+# print('Data sanity check completed successfully.')
 # debug(print_=False)
 
 
@@ -401,6 +387,36 @@ cgm4_food_bin = cgm4_food_bin.apply(lambda x: getBin(x))
 cgm5_food_bin = cgm5_food_bin.apply(lambda x: getBin(x))
 
 
+# Converting df to list to get filtered outputs
+
+cgm_max_bin_list = list()
+cgm_max_bin_list.append(cgm1_max_bin.to_list())
+cgm_max_bin_list.append(cgm2_max_bin.to_list())
+cgm_max_bin_list.append(cgm3_max_bin.to_list())
+cgm_max_bin_list.append(cgm4_max_bin.to_list())
+cgm_max_bin_list.append(cgm5_max_bin.to_list())
+# for x in cgm_max_bin_list:
+    # print(x)
+
+
+cgm_food_bin_list = list()
+cgm_food_bin_list.append(cgm1_food_bin.tolist())
+cgm_food_bin_list.append(cgm2_food_bin.tolist())
+cgm_food_bin_list.append(cgm3_food_bin.tolist())
+cgm_food_bin_list.append(cgm4_food_bin.tolist())
+cgm_food_bin_list.append(cgm5_food_bin.tolist())
+# for x in cgm_food_bin_list:
+    # print(x)
+
+ib_max_list = list()
+ib_max_list.append(ib1_max.tolist())
+ib_max_list.append(ib2_max.tolist())
+ib_max_list.append(ib3_max.tolist())
+ib_max_list.append(ib4_max.tolist())
+ib_max_list.append(ib5_max.tolist())
+# for x in ib_max_list:
+    # print(x)
+
 # Creating Dataset
 
 dataset1 = pd.concat([cgm1_max_bin, cgm1_food_bin, ib1_max], axis=1)
@@ -426,8 +442,8 @@ def fir(dataset):
     te = TransactionEncoder()
     te_ary = te.fit(dataset).transform(dataset)
     df = pd.DataFrame(te_ary, columns=te.columns_)
-    frequent_itemsets = apriori(df, min_support=0.00000000001, use_colnames=True)
-    rules = association_rules(frequent_itemsets, metric="lift", min_threshold=1)
+    frequent_itemsets = apriori(df, min_support=10**-10, use_colnames=True)
+    rules = association_rules(frequent_itemsets, metric="support", min_threshold=10**-10)
     rules = rules.drop(columns=['antecedent support', 'consequent support', 'support', 'lift', 'leverage', 'conviction'])
     return frequent_itemsets, rules
 
@@ -438,8 +454,8 @@ frequent_itemsets4, rules4 = fir(dataset4)
 frequent_itemsets5, rules5 = fir(dataset5)
 
 # print('Itemsets & Rules found successfully.')
-debug_frequentitemset(print_=False)
-debug_rules(print_=False)
+# debug_frequentitemset(print_=False)
+# debug_rules(print_=False)
 
 
 # Finding Most Frequent Itemsets
@@ -463,15 +479,51 @@ mfi5 = mfi(frequent_itemsets5)
 
 # Filtering Rules
 
-def filter_rules(rules):
+def filter_rules(rules, i):
     rules["antecedent_len"] = rules["antecedents"].apply(lambda x: len(x))
     rules["consequent_len"] = rules["consequents"].apply(lambda x: len(x))
+
+    # Selecting rules of the form A, B -> C
     rules = rules[(rules['antecedent_len'] == 2) & (rules['consequent_len'] == 1)]
-    print(rules)
-    print (rules['confidence'].min())
+    rules.reset_index(drop=True, inplace=True)
+
+    # Selecting rules where C belongs to ib
+    rules['consequents_check'] = rules['consequents'].apply(
+        lambda x: 'True' if list(x)[0] in ib_max_list[i - 1] else 'False')
+    rules = rules[rules['consequents_check'] == 'True']
+    rules.reset_index(drop=True, inplace=True)
+
+    # Selecting rules where A & B belong to cgm_max or cgm_food
+    rules['antecedents_check'] = rules['antecedents'].apply(lambda x: 'True' if (
+                (list(x)[0] in cgm_food_bin_list[i - 1] and list(x)[1] in cgm_max_bin_list[i - 1]) or (
+                    list(x)[1] in cgm_food_bin_list[i - 1] and list(x)[0] in cgm_max_bin_list[i - 1])) else 'False')
+    rules = rules[rules['antecedents_check'] == 'True']
+    rules.reset_index(drop=True, inplace=True)
+
+    # print(rules)
+
+    # Selecting rules where confidence is minimum
+    min_confidence = rules['confidence'].min()
+    min_rules = rules[rules['confidence'] == min_confidence]
+    min_rules.reset_index(drop=True, inplace=True)
+
+    # Selecting rules where confidence is maximum
+    max_confidence = rules['confidence'].max()
+    max_rules = rules[rules['confidence'] == max_confidence]
+    max_rules.reset_index(drop=True, inplace=True)
+
+    # print('Min Confidence: ', min_confidence)
+    # print(min_rules)
+    # print('Max Confidence: ', max_confidence)
+    # print(max_rules)
+    return min_rules, max_rules
 
 
-# print(rules1)
-# print (rules1['confidence'].min())
 
-filter_rules(rules1)
+min_rules1, max_rules1 = filter_rules(rules1, 1)
+min_rules2, max_rules2 = filter_rules(rules2, 2)
+min_rules3, max_rules3 = filter_rules(rules3, 3)
+min_rules4, max_rules4 = filter_rules(rules4, 4)
+min_rules5, max_rules5 = filter_rules(rules5, 5)
+
+
