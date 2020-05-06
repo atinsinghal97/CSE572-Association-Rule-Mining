@@ -3,17 +3,24 @@ import sys
 import numpy as np
 import pandas as pd
 
+# from apyori import apriori
+from mlxtend.frequent_patterns import apriori, association_rules
 from mlxtend.preprocessing import TransactionEncoder
 
 import warnings
 
 warnings.filterwarnings("ignore")
 
+
+# Debug Functions
+
 def debug(print_=False):
     debug_cgm_max(print_)
     debug_cgm_food(print_)
     debug_ib(print_)
-    # debug_dataset(print)
+    # debug_dataset(print_)
+    # debug_frequentitemset(print_)
+    # debug_rules(print_)
 
 def debug_ib(print_=False):
     if print_ is not False:
@@ -91,6 +98,46 @@ def debug_dataset(print_=False):
         r"/Users/atinsinghal97/Documents/Projects/ASU/Spring 20/CSE 572 Data Mining/Assignment 4/Processed Data/dataset5.csv",
         index=False, header=False)
 
+def debug_frequentitemset(print_=False):
+    if print_ is not False:
+        print (frequent_itemsets1, frequent_itemsets2, frequent_itemsets3, frequent_itemsets4, frequent_itemsets5)
+    head_bool=True
+    frequent_itemsets1.to_csv(
+        r"/Users/atinsinghal97/Documents/Projects/ASU/Spring 20/CSE 572 Data Mining/Assignment 4/Processed Data/frequent_itemsets1.csv",
+        index=False, header=head_bool)
+    frequent_itemsets2.to_csv(
+        r"/Users/atinsinghal97/Documents/Projects/ASU/Spring 20/CSE 572 Data Mining/Assignment 4/Processed Data/frequent_itemsets2.csv",
+        index=False, header=head_bool)
+    frequent_itemsets3.to_csv(
+        r"/Users/atinsinghal97/Documents/Projects/ASU/Spring 20/CSE 572 Data Mining/Assignment 4/Processed Data/frequent_itemsets3.csv",
+        index=False, header=head_bool)
+    frequent_itemsets4.to_csv(
+        r"/Users/atinsinghal97/Documents/Projects/ASU/Spring 20/CSE 572 Data Mining/Assignment 4/Processed Data/frequent_itemsets4.csv",
+        index=False, header=head_bool)
+    frequent_itemsets5.to_csv(
+        r"/Users/atinsinghal97/Documents/Projects/ASU/Spring 20/CSE 572 Data Mining/Assignment 4/Processed Data/frequent_itemsets5.csv",
+        index=False, header=head_bool)
+
+def debug_rules(print_=False):
+    if print_ is not False:
+        print (rules1, rules2, rules3, rules4, rules5)
+    head_bool=True
+    rules1.to_csv(
+        r"/Users/atinsinghal97/Documents/Projects/ASU/Spring 20/CSE 572 Data Mining/Assignment 4/Processed Data/rules1.csv",
+        index=False, header=head_bool)
+    rules2.to_csv(
+        r"/Users/atinsinghal97/Documents/Projects/ASU/Spring 20/CSE 572 Data Mining/Assignment 4/Processed Data/rules2.csv",
+        index=False, header=head_bool)
+    rules3.to_csv(
+        r"/Users/atinsinghal97/Documents/Projects/ASU/Spring 20/CSE 572 Data Mining/Assignment 4/Processed Data/rules3.csv",
+        index=False, header=head_bool)
+    rules4.to_csv(
+        r"/Users/atinsinghal97/Documents/Projects/ASU/Spring 20/CSE 572 Data Mining/Assignment 4/Processed Data/rules4.csv",
+        index=False, header=head_bool)
+    rules5.to_csv(
+        r"/Users/atinsinghal97/Documents/Projects/ASU/Spring 20/CSE 572 Data Mining/Assignment 4/Processed Data/rules5.csv",
+        index=False, header=head_bool)
+
 
 # Setting DataFolder
 
@@ -117,7 +164,8 @@ else:
     sys.exit(0)
 
 
-dfForDataLoad = pd.DataFrame()
+# List of Files
+
 ibFiles = ['InsulinBolusLunchPat1.csv', 'InsulinBolusLunchPat2.csv', 'InsulinBolusLunchPat3.csv', 'InsulinBolusLunchPat4.csv', 'InsulinBolusLunchPat5.csv']
 cgmFiles = ['CGMSeriesLunchPat1.csv', 'CGMSeriesLunchPat2.csv', 'CGMSeriesLunchPat3.csv', 'CGMSeriesLunchPat4.csv', 'CGMSeriesLunchPat5.csv']
 
@@ -322,7 +370,7 @@ def getBin(val):
     #     return 1
     # elif val>50 and val<=60:
     #     return 2
-    if float(val)%10==float(0):
+    if float(val)%10 == float(0):
         return int(val/10)-4
     else:
         return int(val/10)-3
@@ -371,5 +419,59 @@ dataset5.columns = ['cgm_max', 'cgm_food', 'ib']
 # debug_dataset(print_=False)
 
 
-# Finding Frequent Itemsets
+# Finding Frequent Itemsets & Rules
 
+def fir(dataset):
+    dataset = dataset.values.tolist()
+    te = TransactionEncoder()
+    te_ary = te.fit(dataset).transform(dataset)
+    df = pd.DataFrame(te_ary, columns=te.columns_)
+    frequent_itemsets = apriori(df, min_support=0.00000000001, use_colnames=True)
+    rules = association_rules(frequent_itemsets, metric="lift", min_threshold=1)
+    rules = rules.drop(columns=['antecedent support', 'consequent support', 'support', 'lift', 'leverage', 'conviction'])
+    return frequent_itemsets, rules
+
+frequent_itemsets1, rules1 = fir(dataset1)
+frequent_itemsets2, rules2 = fir(dataset2)
+frequent_itemsets3, rules3 = fir(dataset3)
+frequent_itemsets4, rules4 = fir(dataset4)
+frequent_itemsets5, rules5 = fir(dataset5)
+
+# print('Itemsets & Rules found successfully.')
+debug_frequentitemset(print_=False)
+debug_rules(print_=False)
+
+
+# Finding Most Frequent Itemsets
+
+def mfi(frequent_itemsets):
+    frequent_itemsets['length'] = frequent_itemsets['itemsets'].apply(lambda x: len(x))
+    frequent_itemsets = frequent_itemsets[frequent_itemsets['length'] == 3]
+    max_support = frequent_itemsets['support'].max()
+    frequent_itemsets = frequent_itemsets[frequent_itemsets['support'] == max_support]
+    frequent_itemsets.reset_index(drop=True, inplace=True)
+    # print('Max Support: ', max_support)
+    # print(frequent_itemsets)
+    return frequent_itemsets
+
+mfi1 = mfi(frequent_itemsets1)
+mfi2 = mfi(frequent_itemsets2)
+mfi3 = mfi(frequent_itemsets3)
+mfi4 = mfi(frequent_itemsets4)
+mfi5 = mfi(frequent_itemsets5)
+
+
+# Filtering Rules
+
+def filter_rules(rules):
+    rules["antecedent_len"] = rules["antecedents"].apply(lambda x: len(x))
+    rules["consequent_len"] = rules["consequents"].apply(lambda x: len(x))
+    rules = rules[(rules['antecedent_len'] == 2) & (rules['consequent_len'] == 1)]
+    print(rules)
+    print (rules['confidence'].min())
+
+
+# print(rules1)
+# print (rules1['confidence'].min())
+
+filter_rules(rules1)
