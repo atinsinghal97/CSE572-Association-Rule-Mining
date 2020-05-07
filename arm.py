@@ -2,6 +2,7 @@ import os
 import sys
 import numpy as np
 import pandas as pd
+import csv
 
 from mlxtend.frequent_patterns import apriori, association_rules
 from mlxtend.preprocessing import TransactionEncoder
@@ -455,6 +456,7 @@ frequent_itemsets5, rules5 = fir(dataset5)
 
 # print('Itemsets & Rules found successfully.')
 # debug_frequentitemset(print_=False)
+# print(frequent_itemsets1.shape, frequent_itemsets2.shape, frequent_itemsets3.shape, frequent_itemsets4.shape, frequent_itemsets5.shape)
 # debug_rules(print_=False)
 
 
@@ -463,18 +465,22 @@ frequent_itemsets5, rules5 = fir(dataset5)
 def mfi(frequent_itemsets):
     frequent_itemsets['length'] = frequent_itemsets['itemsets'].apply(lambda x: len(x))
     frequent_itemsets = frequent_itemsets[frequent_itemsets['length'] == 3]
+    len3_itemsets = frequent_itemsets
+    len3_itemsets.reset_index(drop=True, inplace=True)
     max_support = frequent_itemsets['support'].max()
     frequent_itemsets = frequent_itemsets[frequent_itemsets['support'] == max_support]
     frequent_itemsets.reset_index(drop=True, inplace=True)
     # print('Max Support: ', max_support)
     # print(frequent_itemsets)
-    return frequent_itemsets
+    return frequent_itemsets, len3_itemsets
 
-mfi1 = mfi(frequent_itemsets1)
-mfi2 = mfi(frequent_itemsets2)
-mfi3 = mfi(frequent_itemsets3)
-mfi4 = mfi(frequent_itemsets4)
-mfi5 = mfi(frequent_itemsets5)
+mfi1, len3_itemsets1 = mfi(frequent_itemsets1)
+mfi2, len3_itemsets2 = mfi(frequent_itemsets2)
+mfi3, len3_itemsets3 = mfi(frequent_itemsets3)
+mfi4, len3_itemsets4 = mfi(frequent_itemsets4)
+mfi5, len3_itemsets5 = mfi(frequent_itemsets5)
+# print(mfi1.shape, mfi2.shape, mfi3.shape, mfi4.shape, mfi5.shape)
+# print(len3_itemsets1)
 
 
 # Filtering Rules
@@ -518,8 +524,6 @@ def filter_rules(rules, i):
     # print(max_rules)
     return min_rules, max_rules
 
-
-
 min_rules1, max_rules1 = filter_rules(rules1, 1)
 min_rules2, max_rules2 = filter_rules(rules2, 2)
 min_rules3, max_rules3 = filter_rules(rules3, 3)
@@ -527,3 +531,200 @@ min_rules4, max_rules4 = filter_rules(rules4, 4)
 min_rules5, max_rules5 = filter_rules(rules5, 5)
 
 
+# Getting data ready for output CSVs
+
+def prepareDF_fi(df, param_=1): #mfi, len3_itemsets
+    intermediateList1 = list()
+    intermediateList2 = list()
+    intermediateList3 = list()
+    df['itemsets'].apply(lambda x: intermediateList1.append(list(x)[0]))
+    df['itemsets'].apply(lambda x: intermediateList2.append(list(x)[1]))
+    df['itemsets'].apply(lambda x: intermediateList3.append(list(x)[2]))
+    # for x in zip(intermediateList1, intermediateList2, intermediateList3): print (x)
+    if param_==1:
+        return zip(intermediateList1, intermediateList2, intermediateList3)
+    elif param_==3:
+        return intermediateList1, intermediateList2, intermediateList3
+
+
+def prepareDF_rules(df, param_=1): #min_riles, max_rules
+    antecedentsList_1 = list()
+    antecedentsList_2 = list()
+    consequentsList = list()
+
+    df['antecedents'].apply(lambda x: antecedentsList_1.append(list(x)[0]))
+    df['antecedents'].apply(lambda x: antecedentsList_2.append(list(x)[1]))
+    df['consequents'].apply(lambda x: consequentsList.append(list(x)[0]))
+    # for x in zip(antecedentsList_1, antecedentsList_2, consequentsList): print (x)
+    if param_==1:
+        return zip(antecedentsList_1, antecedentsList_2, consequentsList)
+    elif param_==3:
+        return antecedentsList_1, antecedentsList_2, consequentsList
+
+
+# Generating CSV
+
+def make_csv_3col(zipObj1, zipObj2, zipObj3, zipObj4, zipObj5, file):
+    with open(file, "w") as f:
+        writer = csv.writer(f)
+        for row in zipObj1:
+            writer.writerow(row)
+        for row in zipObj2:
+            writer.writerow(row)
+        for row in zipObj3:
+            writer.writerow(row)
+        for row in zipObj4:
+            writer.writerow(row)
+        for row in zipObj5:
+            writer.writerow(row)
+
+
+def make_csv_1col_fi(file1, file2):
+    combined = list()
+    a = list()
+    b = list()
+    c = list()
+    a, b, c = prepareDF_fi(len3_itemsets1, param_=3)
+    for i in range (len(a)):
+        combined.append('('+str(a[i])+','+str(b[i])+','+str(c[i])+')')
+    a = list()
+    b = list()
+    c = list()
+    a, b, c = prepareDF_fi(len3_itemsets2, param_=3)
+    for i in range(len(a)):
+        combined.append('(' + str(a[i]) + ',' + str(b[i]) + ',' + str(c[i]) + ')')
+    a = list()
+    b = list()
+    c = list()
+    a, b, c = prepareDF_fi(len3_itemsets3, param_=3)
+    for i in range(len(a)):
+        combined.append('(' + str(a[i]) + ',' + str(b[i]) + ',' + str(c[i]) + ')')
+    a = list()
+    b = list()
+    c = list()
+    a, b, c = prepareDF_fi(len3_itemsets4, param_=3)
+    for i in range(len(a)):
+        combined.append('(' + str(a[i]) + ',' + str(b[i]) + ',' + str(c[i]) + ')')
+    a = list()
+    b = list()
+    c = list()
+    a, b, c = prepareDF_fi(len3_itemsets5, param_=3)
+    for i in range(len(a)):
+        combined.append('(' + str(a[i]) + ',' + str(b[i]) + ',' + str(c[i]) + ')')
+    df1 = pd.DataFrame(combined)
+    df1.to_csv(file1, index=False, header=False)
+
+    combined = list()
+    a = list()
+    b = list()
+    c = list()
+    a, b, c = prepareDF_fi(mfi1, param_=3)
+    for i in range(len(a)):
+        combined.append('(' + str(a[i]) + ',' + str(b[i]) + ',' + str(c[i]) + ')')
+    a = list()
+    b = list()
+    c = list()
+    a, b, c = prepareDF_fi(mfi2, param_=3)
+    for i in range(len(a)):
+        combined.append('(' + str(a[i]) + ',' + str(b[i]) + ',' + str(c[i]) + ')')
+    a = list()
+    b = list()
+    c = list()
+    a, b, c = prepareDF_fi(mfi3, param_=3)
+    for i in range(len(a)):
+        combined.append('(' + str(a[i]) + ',' + str(b[i]) + ',' + str(c[i]) + ')')
+    a = list()
+    b = list()
+    c = list()
+    a, b, c = prepareDF_fi(mfi4, param_=3)
+    for i in range(len(a)):
+        combined.append('(' + str(a[i]) + ',' + str(b[i]) + ',' + str(c[i]) + ')')
+    a = list()
+    b = list()
+    c = list()
+    a, b, c = prepareDF_fi(mfi5, param_=3)
+    for i in range(len(a)):
+        combined.append('(' + str(a[i]) + ',' + str(b[i]) + ',' + str(c[i]) + ')')
+    df2 = pd.DataFrame(combined)
+    df2.to_csv(file2, index=False, header=False)
+
+
+def make_csv_1col_rules(file1, file2):
+    combined = list()
+    a = list()
+    b = list()
+    c = list()
+    a, b, c = prepareDF_rules(min_rules1, param_=3)
+    for i in range (len(a)):
+        combined.append('{'+str(a[i])+','+str(b[i])+'}->'+str(c[i]))
+    a = list()
+    b = list()
+    c = list()
+    a, b, c = prepareDF_rules(min_rules2, param_=3)
+    for i in range(len(a)):
+        combined.append('{' + str(a[i]) + ',' + str(b[i]) + '}->' + str(c[i]))
+    a = list()
+    b = list()
+    c = list()
+    a, b, c = prepareDF_rules(min_rules3, param_=3)
+    for i in range(len(a)):
+        combined.append('{' + str(a[i]) + ',' + str(b[i]) + '}->' + str(c[i]))
+    a = list()
+    b = list()
+    c = list()
+    a, b, c = prepareDF_rules(min_rules4, param_=3)
+    for i in range(len(a)):
+        combined.append('{' + str(a[i]) + ',' + str(b[i]) + '}->' + str(c[i]))
+    a = list()
+    b = list()
+    c = list()
+    a, b, c = prepareDF_rules(min_rules5, param_=3)
+    for i in range(len(a)):
+        combined.append('{' + str(a[i]) + ',' + str(b[i]) + '}->' + str(c[i]))
+    df1 = pd.DataFrame(combined)
+    df1.to_csv(file1, index=False, header=False)
+
+    combined = list()
+    a = list()
+    b = list()
+    c = list()
+    a, b, c = prepareDF_rules(max_rules1, param_=3)
+    for i in range(len(a)):
+        combined.append('{' + str(a[i]) + ',' + str(b[i]) + '}->' + str(c[i]))
+    a = list()
+    b = list()
+    c = list()
+    a, b, c = prepareDF_rules(max_rules2, param_=3)
+    for i in range(len(a)):
+        combined.append('{' + str(a[i]) + ',' + str(b[i]) + '}->' + str(c[i]))
+    a = list()
+    b = list()
+    c = list()
+    a, b, c = prepareDF_rules(max_rules3, param_=3)
+    for i in range(len(a)):
+        combined.append('{' + str(a[i]) + ',' + str(b[i]) + '}->' + str(c[i]))
+    a = list()
+    b = list()
+    c = list()
+    a, b, c = prepareDF_rules(max_rules4, param_=3)
+    for i in range(len(a)):
+        combined.append('{' + str(a[i]) + ',' + str(b[i]) + '}->' + str(c[i]))
+    a = list()
+    b = list()
+    c = list()
+    a, b, c = prepareDF_rules(max_rules5, param_=3)
+    for i in range(len(a)):
+        combined.append('{' + str(a[i]) + ',' + str(b[i]) + '}->' + str(c[i]))
+    df2 = pd.DataFrame(combined)
+    df2.to_csv(file2, index=False, header=False)
+
+
+# Save 1-column CSVs
+make_csv_1col_fi('1-Frequent-OneCol.csv', '1-MostFrequent-OneCol.csv')
+make_csv_1col_rules('3-OneCol.csv', '2-OneCol.csv')
+
+# Save 3-column CSVs
+make_csv_3col(prepareDF_rules(min_rules1), prepareDF_rules(min_rules2), prepareDF_rules(min_rules3), prepareDF_rules(min_rules4), prepareDF_rules(min_rules5), '3-MultipleCols.csv')
+make_csv_3col(prepareDF_rules(max_rules1), prepareDF_rules(max_rules2), prepareDF_rules(max_rules3), prepareDF_rules(max_rules4), prepareDF_rules(max_rules5), '2-MultipleCols.csv')
+make_csv_3col(prepareDF_fi(mfi1), prepareDF_fi(mfi2), prepareDF_fi(mfi3), prepareDF_fi(mfi4), prepareDF_fi(mfi5), '1-MostFrequent-MultipleCols.csv')
+make_csv_3col(prepareDF_fi(len3_itemsets1), prepareDF_fi(len3_itemsets2), prepareDF_fi(len3_itemsets3), prepareDF_fi(len3_itemsets4), prepareDF_fi(len3_itemsets5), '1-Frequent-MultipleCols.csv')
