@@ -12,6 +12,9 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
+no_of_columns = 0
+
+
 # Debug Functions
 
 def debug(print_=False):
@@ -148,18 +151,25 @@ if (len(sys.argv)) == 1:
     # directory = "/Users/atinsinghal97/Documents/Projects/ASU/Spring 20/CSE 572 Data Mining/Assignment 4/DataFolder/"
     print ("Using the default path for Data Folder: ", directory)
     if (input ("Continue? (y/n)") == 'n'):
-        print("Run the code as python <file-name.py> <Path-to-DataFolder>")
+        print("Run the code as python <file-name.py> <Path-to-DataFolder> <no-of-columns-for-output-1-or-3>")
         print(
-            "Eg: python arm.py /Users/atinsinghal97/Documents/Projects/ASU/Spring 20/CSE 572 Data Mining/Assignment 4/DataFolder/")
+            "Eg: python arm.py /Users/atinsinghal97/Documents/Projects/ASU/Spring 20/CSE 572 Data Mining/Assignment 4/DataFolder/ 1")
         print ("Make sure to use the os separator at the end. It's ", os.sep, " for your OS.")
         sys.exit(0)
-elif (len(sys.argv)) == 2:
+elif (len(sys.argv)) == 3:
+    no_of_columns = int(sys.argv[2])
+    if (no_of_columns == 1 or no_of_columns == 3) is False:
+        print("No. of columns can have a value of 1 or 3.")
+        print("1 generates CSV in the format {19,6}->1.6 and (1.2,4,10)")
+        print("3 generates CSV in the format 19, 6, 1.6 and 1.2, 4, 10 separated in 3 columns")
+        print(no_of_columns, " is not a valid value. Try Again with 1 or 3.")
+        sys.exit(0)
     directory = sys.argv[1]
     if directory[-1]!=os.sep:
         directory = directory + os.sep
 else:
-    print ("Error. Run the code as python <file-name.py> <Path-to-DataFolder>")
-    print ("Eg: python arm.py /Users/atinsinghal97/Documents/Projects/ASU/Spring 20/CSE 572 Data Mining/Assignment 4/DataFolder/")
+    print ("Error. Run the code as python <file-name.py> <Path-to-DataFolder> <no-of-columns-for-output-1-or-3>")
+    print ("Eg: python arm.py /Users/atinsinghal97/Documents/Projects/ASU/Spring 20/CSE 572 Data Mining/Assignment 4/DataFolder/ 1")
     print ("Make sure to use the os separator at the end. It's ", os.sep, " for your OS.")
     sys.exit(0)
 
@@ -720,11 +730,13 @@ def make_csv_1col_rules(file1, file2):
 
 
 # Save 1-column CSVs
-make_csv_1col_fi('1-Frequent-OneCol.csv', '1-MostFrequent-OneCol.csv')
-make_csv_1col_rules('3-OneCol.csv', '2-OneCol.csv')
+if no_of_columns==1 or no_of_columns==0:
+    make_csv_1col_fi('1-Frequent-OneCol.csv', '1-MostFrequent-OneCol.csv')
+    make_csv_1col_rules('3-OneCol.csv', '2-OneCol.csv')
 
 # Save 3-column CSVs
-make_csv_3col(prepareDF_rules(min_rules1), prepareDF_rules(min_rules2), prepareDF_rules(min_rules3), prepareDF_rules(min_rules4), prepareDF_rules(min_rules5), '3-MultipleCols.csv')
-make_csv_3col(prepareDF_rules(max_rules1), prepareDF_rules(max_rules2), prepareDF_rules(max_rules3), prepareDF_rules(max_rules4), prepareDF_rules(max_rules5), '2-MultipleCols.csv')
-make_csv_3col(prepareDF_fi(mfi1), prepareDF_fi(mfi2), prepareDF_fi(mfi3), prepareDF_fi(mfi4), prepareDF_fi(mfi5), '1-MostFrequent-MultipleCols.csv')
-make_csv_3col(prepareDF_fi(len3_itemsets1), prepareDF_fi(len3_itemsets2), prepareDF_fi(len3_itemsets3), prepareDF_fi(len3_itemsets4), prepareDF_fi(len3_itemsets5), '1-Frequent-MultipleCols.csv')
+if no_of_columns==3 or no_of_columns==0:
+    make_csv_3col(prepareDF_rules(min_rules1), prepareDF_rules(min_rules2), prepareDF_rules(min_rules3), prepareDF_rules(min_rules4), prepareDF_rules(min_rules5), '3-MultipleCols.csv')
+    make_csv_3col(prepareDF_rules(max_rules1), prepareDF_rules(max_rules2), prepareDF_rules(max_rules3), prepareDF_rules(max_rules4), prepareDF_rules(max_rules5), '2-MultipleCols.csv')
+    make_csv_3col(prepareDF_fi(mfi1), prepareDF_fi(mfi2), prepareDF_fi(mfi3), prepareDF_fi(mfi4), prepareDF_fi(mfi5), '1-MostFrequent-MultipleCols.csv')
+    make_csv_3col(prepareDF_fi(len3_itemsets1), prepareDF_fi(len3_itemsets2), prepareDF_fi(len3_itemsets3), prepareDF_fi(len3_itemsets4), prepareDF_fi(len3_itemsets5), '1-Frequent-MultipleCols.csv')
