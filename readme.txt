@@ -1,7 +1,3 @@
-Code by ATIN SINGHAL.
-ASU ID# 1217358454.
-
-
 How to compile code?
 --------------------
 This code uses Python3. The python code file imports the following libraries:
