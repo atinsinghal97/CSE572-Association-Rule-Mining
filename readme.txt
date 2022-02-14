@@ -1,3 +1,5 @@
+Aim - Info in the `todo.pdf` file.
+
 How to compile code?
 --------------------
 This code uses Python3. The python code file imports the following libraries:
